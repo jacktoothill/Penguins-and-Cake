@@ -1,0 +1,156 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Phaser Game</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+
+    game.load.image('background', 'assets/background.png');
+    game.load.image('ground', 'assets/platform.png');
+    game.load.image('cake', 'assets/cake.png');
+    game.load.image('icespike', 'assets/icespike.png')
+    game.load.image('dude', 'assets/dude.png');
+
+}
+var player;
+var platforms;
+var cursors;
+var cakes;
+var spike;
+
+//score
+var score = 0;
+var scoreText;
+
+
+
+function create() {
+    //Add arcade physics
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    //Background and ground
+    game.add.sprite(0, 0, 'background');
+    platforms = game.add.group();
+    // enable gravity on group
+    platforms.enableBody = true;
+    //add ground
+    var ground = platforms.create(0, game.world.height -30, 'ground');
+    //Stop the ground moving when collisions occur
+    ground.body.immovable = true;
+    // create ledges
+    var ledge = platforms.create(400, 400, 'ground');
+    ledge.body.immovable = true;
+    ledge = platforms.create(-450, 250, 'ground');
+    ledge.body.immovable = true;
+
+    //cakes
+    cakes = game.add.group();
+    cakes.enableBody = true;
+
+    //Create evenly spaced cakes using for loop
+    for (var i = 0; i < 12; i++) {
+        var cake = cakes.create(i * 70, 0, 'cake');
+        cake.body.gravity.y = 300;
+        cake.body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+
+    //create icespike 
+    icespikes = game.add.group();
+    icespikes.enableBody = true;
+
+    spike = icespikes.create(200, game.world.height -60, 'icespike');
+    spike.body.immovable = true;
+    spike = icespikes.create(300, game.world.height -60, 'icespike');
+    spike.body.immovable = true;
+    spike = icespikes.create(500, 370, 'icespike');
+    spike.body.immovable = true;
+    spike = icespikes.create(600, 370, 'icespike');
+    spike.body.immovable = true;
+    spike = icespikes.create(50, 220, 'icespike');
+    spike.body.immovable = true;
+
+    //Score text
+    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#FFF' });
+
+    // The player and its settings
+    player = game.add.sprite(32, game.world.height - 150, 'dude');
+    player.scale.setTo(0.5,0.5)
+    //  We need to enable physics on the player
+    game.physics.arcade.enable(player);
+
+    //  Player physics properties, add bounce
+    player.body.bounce.y = 0.2;
+    player.body.gravity.y = 300;
+    player.body.collideWorldBounds = true;
+
+    //Walking animation
+    player.animations.add('left', [0, 1, 2, 3], 10, true);
+    player.animations.add('right', [5, 6, 7, 8], 10, true);
+    
+    // add controls.
+    cursors = game.input.keyboard.createCursorKeys();
+}
+
+function update() {
+    //  Collide the player and the cakes with the platforms
+    game.physics.arcade.collide(player, platforms);
+    game.physics.arcade.collide(cakes, platforms);
+    game.physics.arcade.overlap(player, cakes, collectCake, null, this);
+    game.physics.arcade.overlap(player, icespikes, spikeKill, null, this);
+    //collect cake and add to score
+    function collectCake (player, cake) {
+        cake.kill();
+        score += 10;
+        scoreText.text = 'score: ' + score;
+    }
+
+    //spike kill
+    function spikeKill (player, spike) {
+        player.kill();
+    }
+
+    //  Reset the players velocity (movement)
+    player.body.velocity.x = 0;
+    if (cursors.left.isDown)
+    {
+        //  Move to the left
+        player.body.velocity.x = -150;
+        player.animations.play('left');
+    }
+    else if (cursors.right.isDown)
+    {
+        //  Move to the right
+        player.body.velocity.x = 150;
+        player.animations.play('right');
+    }
+    else
+    {
+        //  Stand still
+        player.animations.stop();
+        player.frame = 4;
+    }
+    
+    // player jumps if only on ground
+    if (cursors.up.isDown && player.body.touching.down)
+    {
+        player.body.velocity.y = -350;
+    }
+}
+
+</script>
+
+</body>
+</html>
